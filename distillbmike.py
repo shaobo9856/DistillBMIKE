@@ -33,19 +33,26 @@ def train(teacher_model, student_model, demonstrations, new_facts, num_epochs=5,
     
     for epoch in range(num_epochs):
         student_model.train()
-        
-        demo_input = demonstrations[0]['en']['question'] + demonstrations[0]['en']['answer'] 
+    
+        demo_input = f"New Fact: {demonstrations[0]['en']['question']} {demonstrations[0]['en']['answer'] }" + \
+                    f"New Fact: {demonstrations[0]['zh']['question']} {demonstrations[0]['zh']['answer'] }"
 
         for new_fact in  new_facts:
+            prompts_truth = new_fact['en']['question']
+            prompts_test = new_fact['zh']['question']
+
+            target_truth = new_fact['en']['answer']
+            target_test = new_fact['zh']['answer']
+
             # 处理输入（教师模型的输入，包含示例和新事实）
-            new_fact_input = tokenizer(f"{new_fact['question']} {new_fact['answer']}", return_tensors='pt').to(device)
+            new_fact_input = tokenizer(demo_input +f"New Fact: {prompts_truth}{target_truth} \nPrompt: {prompts_test}", return_tensors='pt').to(device)
 
             with torch.no_grad():
                 teacher_outputs = teacher_model(**new_fact_input, labels=new_fact_input['input_ids'])
                 teacher_logits = teacher_outputs.logits
             
             # 处理新事实（学生模型的输入）
-            new_inputs = tokenizer(new_fact['question'], return_tensors='pt').to(device)
+            new_inputs = tokenizer(prompts_test, return_tensors='pt').to(device)
             student_outputs = student_model(**new_inputs, labels=new_inputs['input_ids'])
             student_logits = student_outputs.logits
             
@@ -83,8 +90,26 @@ demonstrations = [
 ]
 
 new_facts = [
-    {"question": "What is the capital of Japan?", "answer": "Tokyo"},
-    {"question": "What is the capital of Germany?", "answer": "Berlin"}
+    {
+        "en":{
+            "question": "What is the capital of Spain?",
+            "answer": "Madrid"
+        },
+        "zh":{
+            "question": "西班牙的首都是哪里？",
+            "answer": "马德里"
+        }
+    },
+    {
+        "en":{
+            "question": "What is the capital of Russia?",
+            "answer": "Moscow"
+        },
+        "zh":{
+            "question": "俄罗斯的首都是哪里？",
+            "answer": "莫斯科"
+        }
+    },
 ]
 
 # 开始训练
