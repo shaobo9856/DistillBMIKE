@@ -66,6 +66,11 @@ def train(teacher_model, student_model, demonstrations, new_facts, num_epochs=5,
             
             print(f"Epoch: {epoch}, Loss: {loss.item()}")
 
+    # 保存训练好的模型
+    teacher_model.save_pretrained("trained_teacher_model")
+    student_model.save_pretrained("trained_student_model")
+
+
 # 示例数据
 demonstrations = [
     {
