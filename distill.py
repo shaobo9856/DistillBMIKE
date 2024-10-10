@@ -58,7 +58,7 @@ del teacher_model  # 释放内存
 np.save("teacher_logits.npy", np.array(logits_list))
 
 # 训练 student_model
-student_model = GPTJForCausalLM.from_pretrained("EleutherAI/gpt-j-6B").to(device)
+student_model = GPTJForCausalLM.from_pretrained("EleutherAI/gpt-j-6B").to(device, torch_dtype=torch.float16)
 
 def distillation_loss(student_output, teacher_output, temperature=2.0):
     student_log_probs = nn.functional.log_softmax(student_output / temperature, dim=-1)
