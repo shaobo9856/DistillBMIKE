@@ -10,7 +10,7 @@ tokenizer = GPT2Tokenizer.from_pretrained("EleutherAI/gpt-j-6B")
 
 # 确保在相同设备上运行
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-teacher_model.to(device)
+teacher_model.to(device, torch_dtype=torch.float16)
 
 # 示例数据
 demonstrations = [
