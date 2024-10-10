@@ -2,3 +2,7 @@
 
 conda activate mike
 
+python distillbmike.py
+
+
+
