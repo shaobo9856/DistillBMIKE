@@ -33,7 +33,7 @@ def train(teacher_model, student_model, demonstrations, new_facts, num_epochs=5,
     
     for epoch in range(num_epochs):
         student_model.train()
-    
+        print("Control point #0")
         demo_input = f"New Fact: {demonstrations[0]['en']['question']} {demonstrations[0]['en']['answer'] }" + \
                     f"New Fact: {demonstrations[0]['zh']['question']} {demonstrations[0]['zh']['answer'] }"
 
