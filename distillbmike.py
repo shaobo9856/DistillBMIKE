@@ -71,9 +71,21 @@ def train(teacher_model, student_model, demonstrations, new_facts, num_epochs=5,
             
             print(f"Epoch: {epoch}, Loss: {loss.item()}")
 
+    print("Control point #1 -- test generate")
+    question =  "西班牙的首都是哪里？"
+    student_model.eval()
+    input_ids = tokenizer(question, return_tensors='pt').to(device)
+    with torch.no_grad():
+        outputs = student_model.generate(input_ids=input_ids['input_ids'], max_length=50)
+    ans = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    print(f"question: {question} ans: {ans}")
+    print(f"print storage space") 
+    print("Control point #2 save model")
     # 保存训练好的模型
     # teacher_model.save_pretrained("trained_teacher_model")
     student_model.save_pretrained("trained_student_model")
+
+    print("Control point #3 -- done")
 
 
 # 示例数据
