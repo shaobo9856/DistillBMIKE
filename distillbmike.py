@@ -56,6 +56,11 @@ def train(teacher_model, student_model, demonstrations, new_facts, num_epochs=5,
             student_outputs = student_model(**new_inputs, labels=new_inputs['input_ids'])
             student_logits = student_outputs.logits
             
+            # 确保 logits 具有相同的形状
+            min_length = min(student_logits.size(1), teacher_logits.size(1))
+            student_logits = student_logits[:, :min_length, :]
+            teacher_logits = teacher_logits[:, :min_length, :]
+        
             # 计算损失
             loss = distillation_loss(student_logits, teacher_logits)
             
