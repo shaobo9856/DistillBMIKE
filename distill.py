@@ -10,7 +10,10 @@ tokenizer = GPT2Tokenizer.from_pretrained("EleutherAI/gpt-j-6B")
 
 # 确保在相同设备上运行
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-teacher_model.to(device, torch_dtype=torch.float16)
+teacher_model.to(device)  # 将模型移动到设备
+
+# 将模型的权重转换为 float16
+teacher_model.half()  # 如果需要使用 float16
 
 # 示例数据
 demonstrations = [
@@ -58,7 +61,7 @@ del teacher_model  # 释放内存
 np.save("teacher_logits.npy", np.array(logits_list))
 
 # 训练 student_model
-student_model = GPTJForCausalLM.from_pretrained("EleutherAI/gpt-j-6B").to(device, torch_dtype=torch.float16)
+student_model = GPTJForCausalLM.from_pretrained("EleutherAI/gpt-j-6B").to(device)
 
 def distillation_loss(student_output, teacher_output, temperature=2.0):
     student_log_probs = nn.functional.log_softmax(student_output / temperature, dim=-1)
@@ -70,7 +73,8 @@ def train(student_model, new_facts, num_epochs=5, learning_rate=1e-4):
     
     # 加载保存的 logits
     teacher_logits = np.load("teacher_logits.npy")
-    
+    teacher_logits_tensor = torch.tensor(teacher_logits).to(device)  # 将其转换为 PyTorch 张量并放置在 GPU 上
+
     for epoch in range(num_epochs):
         student_model.train()
         for idx, new_fact in enumerate(new_facts):
@@ -83,9 +87,9 @@ def train(student_model, new_facts, num_epochs=5, learning_rate=1e-4):
             student_logits = student_outputs.logits
             
             # 确保 logits 具有相同的形状
-            min_length = min(student_logits.size(1), teacher_logits[idx].shape[1])
+            min_length = min(student_logits.size(1), teacher_logits_tensor[idx].shape[1])
             student_logits = student_logits[:, :min_length, :]
-            teacher_logits_for_loss = torch.tensor(teacher_logits[idx][:, :min_length, :]).to(device)
+            teacher_logits_for_loss = teacher_logits_tensor[idx][:, :min_length, :]
 
             # 计算损失
             loss = distillation_loss(student_logits, teacher_logits_for_loss)
