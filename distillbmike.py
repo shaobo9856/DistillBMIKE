@@ -3,6 +3,10 @@ import torch.nn as nn
 import torch.optim as optim
 from transformers import GPTJForCausalLM, GPT2Tokenizer
 
+# 检查可用的 GPU 数量
+device_count = torch.cuda.device_count()
+print(f"Number of available GPUs: {device_count}")
+
 # 加载模型和分词器
 teacher_model = GPTJForCausalLM.from_pretrained("EleutherAI/gpt-j-6B")
 student_model = GPTJForCausalLM.from_pretrained("EleutherAI/gpt-j-6B")
@@ -10,12 +14,29 @@ tokenizer = GPT2Tokenizer.from_pretrained("EleutherAI/gpt-j-6B")
 
 # 确保在相同设备上运行
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+# 使用 DataParallel 将模型放置在多个 GPU 上
+if device_count > 1:
+    teacher_model = nn.DataParallel(teacher_model)
+    student_model = nn.DataParallel(student_model)
+    
 teacher_model.to(device)
 student_model.to(device)
 
 # 冻结学生模型的其他参数
 for name, param in student_model.named_parameters():
-    if "transformer.h.16" not in name and "transformer.h.17" not in name and "transformer.h.18" not in name:
+    if "transformer.h.16" not in name and "transformer.h.17" not in name and "transformer.h.18" not in name \
+        and "transformer.h.15" not in name \
+        and "transformer.h.14" not in name \
+        and "transformer.h.13" not in name \
+        and "transformer.h.12" not in name \
+        and "transformer.h.11" not in name \
+        and "transformer.h.19" not in name \
+        and "transformer.h.20" not in name\
+        and "transformer.h.21" not in name\
+        and "transformer.h.22" not in name\
+        and "transformer.h.23" not in name:
         param.requires_grad = False
 
 # 定义损失函数
@@ -27,8 +48,25 @@ def distillation_loss(student_output, teacher_output, temperature=2.0):
     teacher_probs = nn.functional.softmax(teacher_output / temperature, dim=-1)
     return nn.functional.kl_div(student_log_probs, teacher_probs, reduction='batchmean') * (temperature ** 2)
 
+def compute_loss(self, model, inputs, return_outputs=False):
+    #Extract cross-entropy loss and logits from student
+    outputs_student = model(**inputs)
+    loss_ce = outputs_student.loss
+    logits_student = outputs_student.logits
+    # Extract logits from teacher
+    outputs_teacher = self.teacher_model(**inputs)
+    logits_teacher = outputs_teacher.logits
+     #Computing distillation loss by Softening probabilities
+    loss_fct = nn.KLDivLoss(reduction="batchmean")
+    loss_kd = self.args.temperature ** 2 * loss_fct(
+                F.log_softmax(logits_student / self.args.temperature, dim=-1),
+                F.softmax(logits_teacher / self.args.temperature, dim=-1))
+
+    loss = self.args.alpha * loss_ce + (1. - self.args.alpha) * loss_kd
+    return (loss, outputs_student) if return_outputs else loss
+
 # 训练函数
-def train(teacher_model, student_model, demonstrations, new_facts, num_epochs=5, learning_rate=1e-4):
+def train(teacher_model, student_model, demonstrations, new_facts, num_epochs=20, learning_rate=1e-4):
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, student_model.parameters()), lr=learning_rate)
     
     for epoch in range(num_epochs):
