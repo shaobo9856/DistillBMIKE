@@ -10,3 +10,14 @@ source env/bin/activate
 pip install -r requirements.txt
 
 python distill.py
+
+
+project/
+│
+├── main.py                   # 主脚本，负责训练和评估流程
+├── model_utils.py            # 模型相关的加载、转移和前向传播功能
+├── dataset.py                # 数据集加载和处理
+├── training.py               # 训练和损失计算
+├── evaluation.py             # 评估功能
+└── utils.py                  # 辅助工具，如 prepare_inputs 函数
+

@@ -4,8 +4,9 @@ from peft import get_peft_model
 from peft import PeftModel
 import os
 
+# 设置模型 ID
 model_id = "meta-llama/Meta-Llama-3-8B"
-lora_model_path = "./outputs/final_checkpoints"
+lora_model_path = "./outputs/final_checkpoints"  # 替换为您的 LoRA 模型保存路径
 
 # 加载分词器
 tokenizer = AutoTokenizer.from_pretrained(model_id)
