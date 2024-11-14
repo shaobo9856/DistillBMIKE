@@ -7,23 +7,24 @@ from model_utils import forward_student_model
 
 scaler = GradScaler()
 
-def train_one_epoch(teacher_model, student_model, data_loader, optimizer, device_student, device_teacher):
+def train_one_epoch(tokenizer, teacher_model, student_model, data_loader, optimizer, device_teacher, device_student):
     teacher_model.eval()
     student_model.train()
     
     for question, answer in data_loader:
-        teacher_input, student_input, answer_target = prepare_inputs(question[0], answer[0], device_teacher, device_student)
+        teacher_input_ids, student_input_ids, answer_target_ids = prepare_inputs(question[0], answer[0], device_teacher, device_student)
         
         with torch.no_grad():
             with autocast():
-                teacher_outputs = teacher_model(**teacher_input)
+                teacher_outputs = teacher_model(**teacher_input_ids)
                 teacher_logits = teacher_outputs.logits.to(device_student)
 
         with autocast():
-            student_logits = forward_student_model(student_model, student_input)
+            student_logits = forward_student_model(student_model, student_input_ids)
 
-        loss = custom_loss(teacher_logits, student_logits, answer_target)
+        loss = custom_loss(teacher_logits, student_logits, answer_target_ids)
         
+        # 反向传播和优化
         optimizer.zero_grad()
         scaler.scale(loss).backward()
         scaler.step(optimizer)

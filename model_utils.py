@@ -8,6 +8,7 @@ def initialize_models(device_teacher, device_student):
     model_name = "meta-llama/Llama-3.1-8b"
     teacher_model = AutoModelForCausalLM.from_pretrained(model_name).to(device_teacher)
     student_model = AutoModelForCausalLM.from_pretrained(model_name).to(device_student)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
 
     # 将 student_model 的层分配到不同的 GPU
     num_layers = len(student_model.model.layers)
@@ -24,7 +25,7 @@ def initialize_models(device_teacher, device_student):
 
     # optimizer = torch.optim.Adam(student_model.parameters(), lr=1e-5)
     optimizer = AdamW8bit(student_model.parameters(), lr=1e-5)
-    return teacher_model, student_model, optimizer
+    return teacher_model, student_model, optimizer, tokenizer
 
 def forward_student_model(student_model, student_input):
     student_input = student_input.to('cuda:1')
@@ -57,11 +58,7 @@ def forward_student_model(student_model, student_input):
             attention_mask=attention_mask,
             position_embeddings=position_embeddings
         )
-                # 检查是否返回了 tuple，如果是，则解包
-        if isinstance(output, tuple):
-            hidden_states = output[0]
-        else:
-            hidden_states = output
+        hidden_states = output[0] if isinstance(output, tuple) else output
 
     # 将中间结果传递到 cuda:2
     hidden_states = hidden_states.to('cuda:2')
@@ -76,17 +73,12 @@ def forward_student_model(student_model, student_input):
             attention_mask=attention_mask,
             position_embeddings=position_embeddings
         )
-        # 检查是否返回了 tuple，如果是，则解包
         hidden_states = output[0] if isinstance(output, tuple) else output
         
     # 输出层在 cuda:2 上
     hidden_states = student_model.model.norm(hidden_states)
 
-    # 添加 lm_head 投影，将 hidden_states 投影到词汇表维度
     student_model.lm_head.to('cuda:2')
     logits = student_model.lm_head(hidden_states)
-    print(student_model.lm_head)
-    print(student_model.lm_head.weight.device)
-
     return logits
 
