@@ -1,3 +1,4 @@
+# evaluation.py
 import torch
 import torch.nn.functional as F
 from model_utils import forward_student_model
@@ -11,12 +12,12 @@ def evaluate_similarity(student_model, data_loader, device_teacher, device_stude
     with torch.no_grad():
         for question, answer in data_loader:
             _, student_input, answer_target = prepare_inputs(question[0], answer[0], device_teacher, device_student)
-            answer_target = answer_target.to(student_model.transformer.wte.weight.device)
-            answer_embedding = student_model.transformer.wte(answer_target)
+            answer_target = answer_target.to(student_model.model.embed_tokens.weight.device)
+            answer_embedding = student_model.model.embed_tokens(answer_target)
 
             student_logits = forward_student_model(student_model, student_input)
             predicted_tokens = student_logits.argmax(dim=-1).to(answer_embedding.device)
-            predicted_embedding = student_model.transformer.wte(predicted_tokens)
+            predicted_embedding = student_model.model.embed_tokens(predicted_tokens)
 
             max_length = max(predicted_embedding.size(1), answer_embedding.size(1))
             predicted_embedding = F.pad(predicted_embedding, (0, 0, 0, max_length - predicted_embedding.size(1)))

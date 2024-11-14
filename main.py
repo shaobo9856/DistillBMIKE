@@ -1,3 +1,4 @@
+# main.py
 import torch
 from torch.utils.data import DataLoader, Subset
 from model_utils import initialize_models
@@ -19,7 +20,7 @@ data_loader = DataLoader(subset, batch_size=1, shuffle=True)
 teacher_model, student_model, optimizer = initialize_models(device_teacher, device_student)
 
 # 训练Epoch
-num_epochs = 15
+num_epochs = 5
 
 # Train & Evaluation
 for epoch in range(num_epochs):

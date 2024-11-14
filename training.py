@@ -1,3 +1,4 @@
+# training.py
 import torch
 import torch.nn.functional as F
 from torch.cuda.amp import autocast, GradScaler
@@ -27,5 +28,6 @@ def train_one_epoch(teacher_model, student_model, data_loader, optimizer, device
         scaler.scale(loss).backward()
         scaler.step(optimizer)
         scaler.update()
-        torch.cuda.empty_cache()
         print(f"Loss: {loss.item():.4f}")
+        del teacher_logits, student_logits, loss
+        torch.cuda.empty_cache()
