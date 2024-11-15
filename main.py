@@ -1,7 +1,7 @@
 # main.py
 import torch
 from torch.utils.data import DataLoader, Subset
-from model_utils import initialize_models
+from model_utils import initialize_models, reset_student_model_devices
 from dataset import CustomQADataset
 from training import train_one_epoch
 from evaluation import evaluate_similarity
@@ -27,4 +27,5 @@ for epoch in range(num_epochs):
     print(f"Epoch {epoch + 1}/{num_epochs}")
     train_one_epoch(tokenizer, teacher_model, student_model, data_loader, optimizer, device_teacher, device_student)
     evaluate_similarity(tokenizer, teacher_model, student_model, data_loader, device_teacher, device_student)
+    reset_student_model_devices(student_model)
     torch.cuda.empty_cache()

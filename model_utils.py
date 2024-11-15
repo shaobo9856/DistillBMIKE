@@ -33,8 +33,6 @@ def forward_student_model(student_model, student_input):
 
     # 获取 attention_mask
     attention_mask = student_input.attention_mask.to('cuda:1')
-
-    # 获取 position_ids
     position_ids = torch.arange(0, sequence_length, dtype=torch.long, device='cuda:1').unsqueeze(0).expand(batch_size, -1)
 
     # 调整 attention_mask 以匹配 LLaMA 的预期输入
@@ -77,8 +75,25 @@ def forward_student_model(student_model, student_input):
         
     # 输出层在 cuda:2 上
     hidden_states = student_model.model.norm(hidden_states)
-
     student_model.lm_head.to('cuda:2')
     logits = student_model.lm_head(hidden_states)
     return logits
 
+
+def reset_student_model_devices(student_model):
+    # 获取模型层的数量
+    num_layers = len(student_model.model.layers)
+    half_num_layers = num_layers // 2
+
+    # 将前半部分的层移动到 cuda:1
+    for layer in student_model.model.layers[:half_num_layers]:
+        layer.to('cuda:1')
+
+    # 将后半部分的层移动到 cuda:2
+    for layer in student_model.model.layers[half_num_layers:]:
+        layer.to('cuda:2')
+
+    # 确保嵌入层和输出层在正确的设备上
+    student_model.model.embed_tokens.to('cuda:1')
+    student_model.model.norm.to('cuda:2')
+    student_model.lm_head.to('cuda:2')
