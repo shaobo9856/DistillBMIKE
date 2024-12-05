@@ -15,7 +15,7 @@ def prepare_inputs(question, answer, device_teacher, device_student):
 
     return teacher_input, student_input, answer_target
 
-def custom_loss(teacher_logits, student_logits, answer_target):
+def custom_loss(teacher_logits, student_logits, answer_target, args):
     # 将 teacher_logits 和 answer_target 移动到 student_logits 的设备上
     teacher_logits = teacher_logits.to(student_logits.device)
     answer_target = answer_target.to(student_logits.device)
@@ -27,17 +27,14 @@ def custom_loss(teacher_logits, student_logits, answer_target):
     print(f"Answer target ids shape: {answer_target.shape}")  # (batch_size, seq_len)
 
     # 提取最后一个时间步的 logits
-    teacher_logits_last = teacher_logits[:, -1, :]  # 形状为 (batch_size, vocab_size)
+    teacher_logits_last = teacher_logits[:, -1, :]  # (batch_size, vocab_size)
     student_logits_last = student_logits[:, -1, :]
     # 把hard label用one hot映射在同一个向量，再与student_logits_last计算ce loss
     answer_target_one_hot = F.one_hot(answer_target, num_classes=128256).float().sum(dim=1)   # (batch_size, vocab_size)
 
-
     print(f"last Teacher logits shape: {teacher_logits_last.shape}")  # (batch_size, vocab_size)
     print(f"last Student logits shape: {student_logits_last.shape}")  # (batch_size, vocab_size)
-    
     print(f"Trimmed Answer target ids shape: {answer_target_one_hot.shape}")  # (batch_size)
-
 
     # Calculate KL divergence between teacher and student logits
     kl_loss = F.kl_div(
@@ -56,5 +53,5 @@ def custom_loss(teacher_logits, student_logits, answer_target):
     # Total loss
     print(f"kl_loss {kl_loss}")
     print(f"cross_entropy_loss {cross_entropy_loss}")
-    loss = kl_loss * 0.4 + cross_entropy_loss * 0.6
+    loss = kl_loss * args.kl + cross_entropy_loss * args.ce
     return loss

@@ -7,7 +7,7 @@ from model_utils import forward_student_model
 
 scaler = GradScaler()
 
-def train_one_epoch(tokenizer, teacher_model, student_model, data_loader, optimizer, device_teacher, device_student):
+def train_one_epoch(tokenizer, teacher_model, student_model, data_loader, optimizer, device_teacher, device_student, args):
     teacher_model.eval()
     student_model.train()
     
@@ -22,7 +22,7 @@ def train_one_epoch(tokenizer, teacher_model, student_model, data_loader, optimi
         with autocast():
             student_logits = forward_student_model(student_model, student_input_ids)
 
-        loss = custom_loss(teacher_logits, student_logits, answer_target_ids)
+        loss = custom_loss(teacher_logits, student_logits, answer_target_ids, args)
         
         # 反向传播和优化
         optimizer.zero_grad()

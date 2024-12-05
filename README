@@ -9,8 +9,13 @@ source env/bin/activate
 
 pip install -r requirements.txt
 
-python distill.py
+python main.py --kl 0.5 --ce 0.5 --num_epochs 10 --num_samples 10
 
+
+GPU监控:
+nohup python monitor_gpu.py &
+ps aux | grep monitor_gpu.py
+kill -9 processnumber
 
 project/
 │
@@ -20,4 +25,3 @@ project/
 ├── training.py               # 训练和损失计算
 ├── evaluation.py             # 评估功能
 └── utils.py                  # 辅助工具，如 prepare_inputs 函数
-
