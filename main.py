@@ -1,4 +1,5 @@
 # main.py
+import os
 import torch
 import argparse
 from torch.utils.data import DataLoader, Subset
@@ -6,6 +7,8 @@ from model_utils import initialize_models, reset_student_model_devices
 from dataset import CustomQADataset
 from training import train_one_epoch
 from evaluation import evaluate_similarity
+
+os.makedirs("models", exist_ok=True)
 
 def main(args):
     # 指定GPU
@@ -28,11 +31,17 @@ def main(args):
         reset_student_model_devices(student_model)
         torch.cuda.empty_cache()
 
+    student_model_path = os.path.join("models", "student_model")
+    student_model.save_pretrained(student_model_path)
+    tokenizer.save_pretrained(student_model_path)
+    print(f"Student model saved to {student_model_path}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fine-tune and evaluate a student model using a teacher model")
 
     # 命令行参数
-    parser.add_argument("--data_path", type=str, default="./data/MzsRE/mzsre_test_duplicate_enar.json", 
+    parser.add_argument("--data_path", type=str, default="./data/counterfact.json",  # "MzsRE/mzsre_test_duplicate_enar.json"  "./data/counterfact.json",
                         help="Path to the dataset file")
     parser.add_argument("--num_epochs", type=int, default=10, help="Number of training epochs")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size for training")

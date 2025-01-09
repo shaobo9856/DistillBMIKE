@@ -12,7 +12,7 @@ def train_one_epoch(tokenizer, teacher_model, student_model, data_loader, optimi
     student_model.train()
     
     for question, answer in data_loader:
-        teacher_input_ids, student_input_ids, answer_target_ids = prepare_inputs(question[0], answer[0], device_teacher, device_student)
+        teacher_input_ids, student_input_ids, answer_target_ids = prepare_inputs(question, answer, device_teacher, device_student)
         
         with torch.no_grad():
             with autocast():

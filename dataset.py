@@ -12,7 +12,14 @@ class CustomQADataset(Dataset):
 
     def __getitem__(self, idx):
         item = self.data[idx]
-        en_data = item.get("en", {})
-        question = en_data.get("src", "")
-        answer = en_data.get("alt", "")
+        prompt = item.get("requested_rewrite", {}).get("prompt", {})
+        subject = item.get("requested_rewrite", {}).get("subject", {})
+        question = prompt.format(subject)
+        answer = item.get("requested_rewrite", {}).get("target_new", {}).get("str", {})
         return question, answer
+    # def __getitem__(self, idx):
+    #     item = self.data[idx]
+    #     en_data = item.get("en", {})
+    #     question = en_data.get("src", "")
+    #     answer = en_data.get("alt", "")
+    #     return question, answer

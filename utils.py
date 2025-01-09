@@ -8,9 +8,11 @@ tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
 tokenizer.pad_token = tokenizer.eos_token
 
 def prepare_inputs(question, answer, device_teacher, device_student):
-    teacher_input = tokenizer(f"Question: {question} | Answer: {answer} | Repeat the answer for the question:{question} ", max_length=100, return_tensors="pt",  # | Answer: 
+    teacher_input = tokenizer(f"Question: {question} | Answer: {answer} | Repeat the answer for the question:{question} | Answer:", max_length=100, return_tensors="pt",  # | Answer: 
                               padding=True, truncation=True, return_attention_mask=True).to(device_teacher)
-    student_input = tokenizer(question, max_length=100, return_tensors="pt", padding=True, truncation=True, return_attention_mask=True).to(device_student)
+    print(question)
+    student_input = tokenizer(f"Question: {question} | Answer:", max_length=100, return_tensors="pt", padding=True, truncation=True, return_attention_mask=True).to(device_student)
+    print(answer)
     answer_target = tokenizer(answer, max_length=100, return_tensors="pt", padding=True, truncation=True).input_ids.to(device_student)
 
     return teacher_input, student_input, answer_target
